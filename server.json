@@ -1,0 +1,60 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dylancaponi/agent-press-wire",
+  "title": "Agent Press Wire",
+  "description": "Announce launches and distribute press releases to 500+ news sites. Pay per call in USDC (x402).",
+  "websiteUrl": "https://agentpresswire.dev",
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "agent-press-wire-mcp",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "X402_PRIVATE_KEY",
+          "description": "Private key of YOUR OWN Base wallet holding USDC, used to pay per call via x402. Omit for quote-only mode.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "MAX_SPEND_USD",
+          "description": "Max USD the server may pay for a single call. 0 (default) = quote only, never pays. Prices: $1 newsroom, $99 wire, $299 premium wire.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "number",
+          "default": "0"
+        },
+        {
+          "name": "MAX_TOTAL_SPEND_USD",
+          "description": "Lifetime cap in USD across all calls and restarts, tracked in a ledger at ~/.agent-press-wire/spend.json. Defaults to MAX_SPEND_USD (one paid call's worth).",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "number"
+        },
+        {
+          "name": "AGENT_PRESS_WIRE_HOME",
+          "description": "Directory for the spend ledger (spend.json). Default ~/.agent-press-wire.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "PRESS_API_URL",
+          "description": "Override the API base URL (testing only).",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/dylancaponi/agent-press-wire-mcp",
+    "source": "github"
+  }
+}

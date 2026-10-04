@@ -1,0 +1,61 @@
+{
+  "name": "agent-press-wire-mcp",
+  "version": "0.1.1",
+  "description": "MCP server for Agent Press Wire: AI agents announce launches and distribute press releases to 500+ news sites, paid per call in USDC over x402.",
+  "mcpName": "io.github.dylancaponi/agent-press-wire",
+  "type": "module",
+  "bin": {
+    "agent-press-wire-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "server.json",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "test": "npm run build && node --test test/hardening-test.mjs",
+    "test:quote": "node test/quote-test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "press-release",
+    "pr",
+    "launch",
+    "newswire",
+    "x402",
+    "usdc",
+    "base",
+    "ai-agents"
+  ],
+  "homepage": "https://agentpresswire.dev",
+  "author": "Dylan Caponi",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "@x402/core": "2.28.0",
+    "@x402/evm": "2.28.0",
+    "@x402/fetch": "2.28.0",
+    "viem": "2.57.2",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dylancaponi/agent-press-wire-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dylancaponi/agent-press-wire-mcp/issues"
+  }
+}
