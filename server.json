@@ -4,12 +4,12 @@
   "title": "Agent Press Wire",
   "description": "Announce launches and distribute press releases to 500+ news sites. Pay per call in USDC (x402).",
   "websiteUrl": "https://agentpresswire.dev",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "agent-press-wire-mcp",
-      "version": "0.1.1",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },

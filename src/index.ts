@@ -34,7 +34,7 @@ import {
   type LedgerEntry,
 } from "./guard.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.3.0";
 const BASE_URL = (process.env.PRESS_API_URL || "https://agentpresswire.dev").replace(/\/+$/, "");
 const TIMEOUT_MS = 180_000;
 
@@ -296,6 +296,41 @@ const announcement = z
   .describe(
     "What is being announced (launch, new version, feature, funding, milestone). Strongly recommended: without it only news visible on the page is written about, and the call fails uncharged if there is none.",
   );
+const ownHeadline = z
+  .string()
+  .max(200)
+  .optional()
+  .describe(
+    "Bring your own copy (optional, together with body): the finished headline, 3 to 20 words, naming the announcing company. When headline and body are given the service publishes or distributes the text as written instead of drafting; it still runs the same safety checks (prohibited topics, market-moving claims on wire tiers, links only to the product's own site, brand must match the page, model safety review) and fails uncharged with reasons if they do not pass.",
+  );
+const ownBody = z
+  .string()
+  .max(12000)
+  .optional()
+  .describe(
+    "Bring your own copy (optional, together with headline): the finished release text in English, plain text, paragraphs separated by blank lines, 150 to 900 words (380 to 900 for wire tiers), at most 5 links and only to the product's own site. Omit headline and body to have the release drafted from the page.",
+  );
+const pictureUrl = z
+  .string()
+  .max(1400000)
+  .optional()
+  .describe(
+    "Optional featured picture: a public http(s) URL or a data:image/png|jpeg|webp|gif;base64 URI, PNG/JPEG/WebP/GIF, max 1 MB. Without it the service uses the product page's og:image picture unless no_image is true. Every picture is safety reviewed before charging (no nudity, violence, hate symbols, other companies' logos, money or health claims, news-site screenshots, hidden instructions); a supplied picture that fails returns an uncharged error with the reason, a page picture that fails is just left out.",
+  );
+const pictureAlt = z.string().max(125).optional().describe("Optional alt text for the featured picture, max 125 characters (defaults to the headline).");
+const pictureCaption = z.string().max(300).optional().describe("Optional caption under the featured picture, max 300 characters.");
+const noPicture = z.boolean().optional().describe("Optional: true to publish without a picture (turns off the automatic picture from the product page).");
+const inlinePictures = z
+  .array(
+    z.object({
+      url: z.string().max(1400000).describe("http(s) URL or data:image/...;base64 URI, max 1 MB."),
+      alt: z.string().max(125).optional().describe("Alt text, max 125 characters."),
+      caption: z.string().max(300).optional().describe("Optional caption, max 300 characters."),
+    }),
+  )
+  .max(3)
+  .optional()
+  .describe("Only with your own headline and body: up to 3 pictures placed inside the release, at lines [image 1], [image 2], [image 3] in the body (or spread evenly if there are no marker lines). Same formats, limit and safety review as image_url.");
 const quoteOnly = z
   .boolean()
   .optional()
@@ -313,7 +348,7 @@ server.registerTool(
     title: "Announce a launch (press release on newsroom page, $1)",
     description:
       `Announce a product launch, release, or update with a press release. PRICE: $1 USDC per call. Use when the user says things like "announce my launch", "write a press release", "publish a press release for my product", "announce our new version". ` +
-      "Given a product URL, Agent Press Wire drafts a factual 350-450 word AP-style press release from the page and publishes it on a public, search-indexed newsroom page (IndexNow ping to Bing/Yandex). Returns the headline, newsroom URL, and the release in markdown. About 20 seconds. " +
+      "Given a product URL, Agent Press Wire drafts a factual 350-450 word AP-style press release from the page and publishes it on a public, search-indexed newsroom page (IndexNow ping to Bing/Yandex). Returns the headline, newsroom URL, and the release in markdown. About 20 seconds. If the user already wrote the release, pass it as headline + body and it is published as written after the service's safety checks. Pictures: the page's og:image is used by default; pass image_url to choose one, and with your own copy up to 3 inline images. " +
       "For distribution to real news sites, use distribute_press_release instead. " +
       PAY_NOTE,
     inputSchema: {
@@ -321,13 +356,20 @@ server.registerTool(
       announcement,
       company: z.string().max(100).optional().describe("Optional company or project name."),
       contact: z.string().max(200).optional().describe("Optional media contact line (name, email or URL) printed at the end."),
+      headline: ownHeadline,
+      body: ownBody,
+      image_url: pictureUrl,
+      image_alt: pictureAlt,
+      image_caption: pictureCaption,
+      no_image: noPicture,
+      images: inlinePictures,
       quote_only: quoteOnly,
       confirm_token: confirmToken,
     },
     annotations: { title: "Announce launch ($1)", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   },
-  async ({ product_url, announcement, company, contact, quote_only, confirm_token }) =>
-    paidPost("/v1/press-release", { product_url, announcement, company, contact }, quote_only, confirm_token),
+  async ({ product_url, announcement, company, contact, headline, body, image_url, image_alt, image_caption, no_image, images, quote_only, confirm_token }) =>
+    paidPost("/v1/press-release", { product_url, announcement, company, contact, headline, body, image_url, image_alt, image_caption, no_image, images }, quote_only, confirm_token),
 );
 
 server.registerTool(
@@ -337,7 +379,7 @@ server.registerTool(
     description:
       `Write a press release and distribute it over a newswire to get press coverage. PRICE: tier "wire" = $99 USDC (500+ news sites plus 100+ TV and radio network sites); tier "premium" = $299 USDC (everything in wire plus AP News, USA Today, Barchart, StreetInsider). ` +
       `Use when the user says things like "get press coverage", "write and distribute a press release", "send a press release to news sites", "put out a press release on the wire", "PR distribution". ` +
-      "Drafts a 450-600 word AP-style release from the product URL; it goes through editorial review and is distributed, usually same day on weekdays. Returns an order_id; poll get_release_status for live links. Not accepted: crypto token sales, gambling, adult, health/cure claims, cannabis. " +
+      "Drafts a 450-600 word AP-style release from the product URL (or, if the user already wrote the release, pass it as headline + body and it is sent as written after the service's safety checks); it goes through editorial review and is distributed, usually same day on weekdays. Pictures as in announce_launch_newsroom (featured picture plus, with own copy, up to 3 inline). Returns an order_id; poll get_release_status for live links. Not accepted: crypto token sales, gambling, adult, health/cure claims, cannabis, and market-moving news (acquisitions, earnings, IPOs, stock, FDA, lawsuits). " +
       PAY_NOTE,
     inputSchema: {
       tier: z.enum(["wire", "premium"]).describe('"wire" = $99 (500+ news sites); "premium" = $299 (adds AP News, USA Today, Barchart, StreetInsider).'),
@@ -347,15 +389,22 @@ server.registerTool(
       contact_email: z.string().email().describe("Media contact email printed on the release (required by newswires)."),
       announcement,
       company: z.string().max(100).optional().describe("Optional company or project name."),
+      headline: ownHeadline,
+      body: ownBody,
+      image_url: pictureUrl,
+      image_alt: pictureAlt,
+      image_caption: pictureCaption,
+      no_image: noPicture,
+      images: inlinePictures,
       quote_only: quoteOnly,
       confirm_token: confirmToken,
     },
     annotations: { title: "Distribute press release ($99/$299)", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   },
-  async ({ tier, product_url, city, country, contact_email, announcement, company, quote_only, confirm_token }) =>
+  async ({ tier, product_url, city, country, contact_email, announcement, company, headline, body, image_url, image_alt, image_caption, no_image, images, quote_only, confirm_token }) =>
     paidPost(
       tier === "premium" ? "/v1/wire-release/premium" : "/v1/wire-release",
-      { product_url, city, country, contact_email, announcement, company },
+      { product_url, city, country, contact_email, announcement, company, headline, body, image_url, image_alt, image_caption, no_image, images },
       quote_only,
       confirm_token,
     ),

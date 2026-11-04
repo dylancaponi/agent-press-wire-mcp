@@ -12,6 +12,14 @@ An MCP server that lets AI agents (Claude Desktop, Claude Code, Cursor, any MCP 
 
 The service only charges when the job succeeds. Failed drafts, rejected topics and wire rejections are not charged.
 
+## Bring your own copy
+
+Both paid tools accept optional `headline` and `body`. When both are given, Agent Press Wire skips drafting and publishes or distributes the text as written (only a media contact line may be appended). Requirements: plain English text, paragraphs separated by blank lines, body 150 to 900 words (380 to 900 for the wire tiers), a 3 to 20 word headline naming the announcing company, at most 5 links and only to the product's own site. The copy goes through the same safety checks as a drafted release (prohibited topics, market-moving claims on wire tiers, brand must match the page, link policy, model safety review); failures come back uncharged with the reasons.
+
+## Pictures
+
+By default the release uses the picture the product page shares (`og:image`, else `twitter:image`). Pass `image_url` (a public http(s) URL or a `data:image/...;base64` URI, PNG/JPEG/WebP/GIF, max 1 MB) with optional `image_alt` (max 125 characters) and `image_caption` (max 300) to choose it, or `no_image: true` for none. With your own `headline` and `body` you can also pass up to 3 inline pictures in `images` (`[{url, alt, caption}]`), placed at `[image 1]`, `[image 2]`, `[image 3]` lines in the body. Every picture gets a safety review before charging; a picture you supply that fails returns an uncharged error with the reason, and a page picture that fails is left out.
+
 ## Safety: quote mode by default
 
 Paid tools **charge real USDC**. Settings that control spending:
@@ -89,6 +97,59 @@ Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
 ```
 
 Other clients: run `npx -y agent-press-wire-mcp` as a stdio server with the same environment variables.
+
+## Vercel AI SDK
+
+The same service is available as AI SDK tools from the `agent-press-wire-mcp/ai-sdk` subpath. Requires `ai` 7 or later.
+
+```bash
+npm install agent-press-wire-mcp ai viem
+```
+
+```ts
+import { generateText, isStepCount } from 'ai';
+import { agentPressWireTools } from 'agent-press-wire-mcp/ai-sdk';
+import { privateKeyToAccount } from 'viem/accounts';
+
+const tools = agentPressWireTools({
+  wallet: privateKeyToAccount(process.env.AGENT_PRIVATE_KEY as `0x${string}`),
+  maxPaymentUsd: 1,
+});
+
+const { text } = await generateText({
+  model: 'openai/gpt-5-mini',
+  prompt: 'We just shipped v2 of https://example.com with offline sync. Publish a press release about it.',
+  tools,
+  stopWhen: isStepCount(3),
+});
+```
+
+| Tool | Price | What it does |
+| --- | --- | --- |
+| `quotePressRelease` | Free | Price of a tier (`newsroom`, `wire`, `premium`) and whether this tool set may pay it. Never signs anything. |
+| `publishPressRelease` | $1 USDC | Same as `announce_launch_newsroom` above. |
+| `distributePressRelease` | $99 or $299 USDC | Same as `distribute_press_release` above. |
+| `getReleaseStatus` | Free | Status and links for a wire order. |
+
+Options:
+
+- `wallet`: a viem account (or any x402 EVM signer) holding USDC on Base. Without it the paid tools only return quotes.
+- `maxPaymentUsd`: most one call may pay. Default `1`, so the newsroom release works and the wire tiers only quote. Set `99` or `299` to allow those.
+- `maxTotalUsd`: most the tool set may pay across all calls. Defaults to `maxPaymentUsd`, so one paid call.
+- `baseUrl`, `fetch`, `timeoutMs`: for testing and proxies. Payment terms are pinned the same way as in the MCP server, so a different `baseUrl` cannot change the payee or the price.
+
+The model cannot change these limits. Each paid tool reads the server's 402 terms first and pays only if they match the pinned wallet and price and the caps allow it.
+
+Every paid tool returns an object with `status` and `charged`:
+
+- `paid`, `charged: true`: the job succeeded and the service settled the payment. `result` holds the release or the wire order.
+- `not_paid`, `charged: false`: nothing was signed, for example no wallet or the price is over a cap. `quote` holds the price.
+- `rejected`, `charged: false`: the service refused the job (HTTP 422 for bad input or a topic it does not accept, 409 for a duplicate, 502 or 503 for a failure on its side). `error` and `details` say what to fix. The service does not settle failed jobs, so these do not count toward `maxTotalUsd`.
+- `unknown`, `charged: "unknown"`: the network failed after a payment authorization was sent. Check the wallet for the `nonce` before retrying. This one keeps counting toward `maxTotalUsd`.
+
+To have a person approve the wire tiers, use the AI SDK's approval setting: `toolApproval: { distributePressRelease: 'user-approval' }` in `generateText` or `streamText`.
+
+Integration guide: https://agentpresswire.dev/docs/ai-sdk
 
 ## Example prompts
 
