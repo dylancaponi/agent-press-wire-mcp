@@ -1,6 +1,6 @@
 {
   "name": "agent-press-wire-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Agent Press Wire for AI agents: MCP server and Vercel AI SDK tools to announce launches and distribute press releases to 500+ news sites, paid per call in USDC over x402.",
   "mcpName": "io.github.dylancaponi/agent-press-wire",
   "type": "module",
@@ -50,7 +50,7 @@
     "ai-sdk-tools"
   ],
   "homepage": "https://agentpresswire.dev",
-  "author": "Dylan Caponi",
+  "author": "Da Capo Code",
   "license": "MIT",
   "engines": {
     "node": ">=20"

@@ -13,7 +13,7 @@ import type { PaymentRequired, PaymentRequirements } from "@x402/fetch";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { NETWORK, USDC_BASE, PAY_TO, atomicToUsd, checkPinnedTerms, usdToAtomic } from "./guard.js";
 
-export const VERSION = "0.3.0";
+export const VERSION = "0.3.1";
 const DEFAULT_BASE_URL = "https://agentpresswire.dev";
 const DEFAULT_TIMEOUT_MS = 180_000;
 
@@ -267,7 +267,7 @@ export function agentPressWireTools(options: AgentPressWireToolsOptions = {}) {
     .max(1400000)
     .optional()
     .describe(
-      "Optional featured picture: a public http(s) URL or a data:image/png|jpeg|webp|gif;base64 URI, PNG/JPEG/WebP/GIF, max 1 MB. Without it the service uses the product page's og:image picture unless no_image is true. Every picture is safety reviewed before charging (no nudity, violence, hate symbols, other companies' logos, money or health claims, news-site screenshots, hidden instructions); a supplied picture that fails returns an uncharged error with the reason, a page picture that fails is just left out.",
+      "Optional featured picture: a public http(s) URL or a data:image/png|jpeg|webp|gif;base64 URI, PNG/JPEG/WebP/GIF, max 1 MB. Without it the service uses the product page's og:image picture unless no_image is true. Every picture is safety reviewed before charging (no nudity, violence, hate symbols, other companies' logos, money or health claims, news-site screenshots, hidden instructions); a supplied picture that fails returns an uncharged error with the reason, a page picture that fails is left out.",
     );
   const pictureAlt = z.string().max(125).optional().describe("Optional alt text for the featured picture, max 125 characters (defaults to the headline).");
   const pictureCaption = z.string().max(300).optional().describe("Optional caption under the featured picture, max 300 characters.");
@@ -338,7 +338,7 @@ export function agentPressWireTools(options: AgentPressWireToolsOptions = {}) {
     }),
 
     getReleaseStatus: tool({
-      description: "FREE. Status and live coverage links for a newswire order from distributePressRelease (order id like w_3f9d0a1b2c).",
+      description: "FREE. Status and live placement links for a newswire order from distributePressRelease (order id like w_3f9d0a1b2c).",
       inputSchema: z.object({ order_id: z.string().describe("order_id returned by distributePressRelease.") }),
       execute: async ({ order_id }) => {
         const id = order_id.trim();

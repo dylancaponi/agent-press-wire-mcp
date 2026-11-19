@@ -1,6 +1,6 @@
 # Agent Press Wire MCP server
 
-An MCP server that lets AI agents (Claude Desktop, Claude Code, Cursor, any MCP client) announce product launches and distribute press releases through [Agent Press Wire](https://agentpresswire.dev). Each call is paid in USDC on Base over [x402](https://x402.org), from **your own wallet**. No account, no API key.
+An MCP server that lets AI agents (Claude Desktop, Claude Code, Cursor, any MCP client) announce product launches and distribute press releases through [Agent Press Wire](https://agentpresswire.dev). Each call is paid in USDC on Base over [x402](https://x402.org), from **your own wallet**. You do not need an account or an API key.
 
 ## Tools
 
@@ -8,7 +8,7 @@ An MCP server that lets AI agents (Claude Desktop, Claude Code, Cursor, any MCP 
 | --- | --- | --- |
 | `announce_launch_newsroom` | $1 USDC | Drafts a 350-450 word AP-style press release from your product URL and publishes it on a public, search-indexed newsroom page. About 20 seconds. |
 | `distribute_press_release` | `tier: "wire"` $99 USDC, `tier: "premium"` $299 USDC | Drafts a 450-600 word release and distributes it over a newswire to 500+ news sites plus 100+ TV and radio network sites. Premium adds AP News, USA Today, Barchart and StreetInsider. Requires `city`, `country`, `contact_email`. Returns an `order_id`. |
-| `get_release_status` | Free | Status and live coverage links for a wire order. |
+| `get_release_status` | Free | Status and live placement links for a wire order. |
 
 The service only charges when the job succeeds. Failed drafts, rejected topics and wire rejections are not charged.
 

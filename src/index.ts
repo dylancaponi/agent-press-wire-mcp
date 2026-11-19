@@ -34,7 +34,7 @@ import {
   type LedgerEntry,
 } from "./guard.js";
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 const BASE_URL = (process.env.PRESS_API_URL || "https://agentpresswire.dev").replace(/\/+$/, "");
 const TIMEOUT_MS = 180_000;
 
@@ -315,7 +315,7 @@ const pictureUrl = z
   .max(1400000)
   .optional()
   .describe(
-    "Optional featured picture: a public http(s) URL or a data:image/png|jpeg|webp|gif;base64 URI, PNG/JPEG/WebP/GIF, max 1 MB. Without it the service uses the product page's og:image picture unless no_image is true. Every picture is safety reviewed before charging (no nudity, violence, hate symbols, other companies' logos, money or health claims, news-site screenshots, hidden instructions); a supplied picture that fails returns an uncharged error with the reason, a page picture that fails is just left out.",
+    "Optional featured picture: a public http(s) URL or a data:image/png|jpeg|webp|gif;base64 URI, PNG/JPEG/WebP/GIF, max 1 MB. Without it the service uses the product page's og:image picture unless no_image is true. Every picture is safety reviewed before charging (no nudity, violence, hate symbols, other companies' logos, money or health claims, news-site screenshots, hidden instructions); a supplied picture that fails returns an uncharged error with the reason, a page picture that fails is left out.",
   );
 const pictureAlt = z.string().max(125).optional().describe("Optional alt text for the featured picture, max 125 characters (defaults to the headline).");
 const pictureCaption = z.string().max(300).optional().describe("Optional caption under the featured picture, max 300 characters.");
@@ -335,7 +335,7 @@ const quoteOnly = z
   .boolean()
   .optional()
   .default(false)
-  .describe("If true, never pay: just return the x402 price quote and a confirm_token. Use this first to show the user the price.");
+  .describe("If true, never pay. Only return the x402 price quote and a confirm_token. Use this first to show the user the price.");
 const confirmToken = z
   .string()
   .max(200)
@@ -377,7 +377,7 @@ server.registerTool(
   {
     title: "Write and distribute a press release over a newswire ($99 / $299)",
     description:
-      `Write a press release and distribute it over a newswire to get press coverage. PRICE: tier "wire" = $99 USDC (500+ news sites plus 100+ TV and radio network sites); tier "premium" = $299 USDC (everything in wire plus AP News, USA Today, Barchart, StreetInsider). ` +
+      `Write a press release and distribute it over a newswire to news sites. PRICE: tier "wire" = $99 USDC (500+ news sites plus 100+ TV and radio network sites); tier "premium" = $299 USDC (everything in wire plus AP News, USA Today, Barchart, StreetInsider). ` +
       `Use when the user says things like "get press coverage", "write and distribute a press release", "send a press release to news sites", "put out a press release on the wire", "PR distribution". ` +
       "Drafts a 450-600 word AP-style release from the product URL (or, if the user already wrote the release, pass it as headline + body and it is sent as written after the service's safety checks); it goes through editorial review and is distributed, usually same day on weekdays. Pictures as in announce_launch_newsroom (featured picture plus, with own copy, up to 3 inline). Returns an order_id; poll get_release_status for live links. Not accepted: crypto token sales, gambling, adult, health/cure claims, cannabis, and market-moving news (acquisitions, earnings, IPOs, stock, FDA, lawsuits). " +
       PAY_NOTE,
@@ -415,7 +415,7 @@ server.registerTool(
   {
     title: "Get press release distribution status (free)",
     description:
-      "FREE. Check the status of a newswire press release order from distribute_press_release (order id like w_ab12cd34ef) and get live links to the published coverage once distributed.",
+      "FREE. Check the status of a newswire press release order from distribute_press_release (order id like w_ab12cd34ef) and get live links to the published placements once distributed.",
     inputSchema: {
       order_id: z.string().describe("The order_id returned by distribute_press_release, e.g. w_3f9d0a1b2c."),
     },
